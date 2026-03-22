@@ -8,7 +8,7 @@ package body Libadaimg.Bitmap is
    ) return Image is 
       File_Header : Bitmap_Header;
       Info_Header : Dib_Header;
-      Using_Bitfields : constant Boolean := Bitfields and (Depth in 16 | 32);
+      Using_Bitfields : constant Boolean := Bitfields and Depth in 16 | 32;
       Row_Size_Bytes  : constant UInt_32 := ((UInt_32(Depth) * UInt_32(Width) + 31) / 32) * 4;
       Image_Size      : constant UInt_32 := Row_Size_Bytes * UInt_32(abs(Height));
       Palette_Size    : constant Int_32  := (if Depth in 1..8 then (2 ** Natural(Depth)) * 4 
@@ -18,7 +18,7 @@ package body Libadaimg.Bitmap is
          Img_Width   => Width,
          Img_Height  => Height,
          Depth       => Depth,
-         Compression => (if (Using_Bitfields or Depth = 16) then BI_BITFIELDS else BI_RGB),
+         Compression => (if Using_Bitfields then BI_BITFIELDS else BI_RGB),
          Image_Size  => Image_Size,
          others      => <>
       );      
