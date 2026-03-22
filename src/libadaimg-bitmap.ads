@@ -11,11 +11,11 @@ package Libadaimg.Bitmap is pragma Preelaborate;
    );
    for Compression_Method'Size use 32;
 
-   type Pixel is record
-      B,G,R,A : Byte;
+   type BGRA_Pixel is record 
+      B,G,R,A : Byte; 
    end record with Pack;
-   
-   type Pixels is array (Natural range <>, Natural range <>) of Pixel with Pack;
+
+   type Pixels is array (Natural range <>, Natural range <>) of BGRA_Pixel with Pack;
    type Pixels_Access is access all Pixels;
    procedure Free_Pixels is new Ada.Unchecked_Deallocation (
       Object => Pixels,
@@ -71,6 +71,11 @@ package Libadaimg.Bitmap is pragma Preelaborate;
       Depth  : Color_Depth;
       Bitfields : Boolean := False
    ) return Image;
+
+   type RGBA_Pixel is record
+      R,G,B,A : Byte;
+   end record with Pack;
+   function As_Rgba (Pixel : BGRA_Pixel) return RGBA_Pixel;
 
    private
       procedure Dealloc is new Ada.Unchecked_Deallocation (

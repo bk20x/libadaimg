@@ -41,4 +41,11 @@ package body Libadaimg.Bitmap is
       end if;
       Dealloc (Img);
    end Free_Image;
+
+   function As_Rgba (Pixel : BGRA_Pixel) return RGBA_Pixel is 
+      Result : RGBA_Pixel;
+      for Result'Address use Pixel'Address;
+   begin
+      return Result;
+   end As_Rgba;
 end Libadaimg.Bitmap;
