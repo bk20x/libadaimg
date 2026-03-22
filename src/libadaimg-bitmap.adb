@@ -33,4 +33,12 @@ package body Libadaimg.Bitmap is
                         1 .. Natural(Width));
       end return;      
    end Create_Image;
+
+   procedure Free_Image (Img : in out Image_Access) is 
+   begin 
+      if Img.Pixels /= null then
+         Free_Pixels (Img.Pixels);
+      end if;
+      Dealloc (Img);
+   end Free_Image;
 end Libadaimg.Bitmap;

@@ -63,10 +63,7 @@ package Libadaimg.Bitmap is pragma Preelaborate;
    end record;
    
    type Image_Access is access all Image;
-   procedure Free_Image is new Ada.Unchecked_Deallocation (
-      Object => Image,
-      Name   => Image_Access
-   );
+   procedure Free_Image (Img : in out Image_Access);
 
    function Create_Image (
       Width  : Int_32;
@@ -74,5 +71,10 @@ package Libadaimg.Bitmap is pragma Preelaborate;
       Depth  : Color_Depth;
       Bitfields : Boolean := False
    ) return Image;
-   
+
+   private
+      procedure Dealloc is new Ada.Unchecked_Deallocation (
+         Object => Image,
+         Name   => Image_Access
+      );
 end Libadaimg.Bitmap;
