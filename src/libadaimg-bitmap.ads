@@ -1,6 +1,7 @@
 with Types; use Types;
 with Ada.Unchecked_Deallocation;
-package Libadaimg.Bitmap is pragma Preelaborate;   
+with Ada.Streams.Stream_IO;
+package Libadaimg.Bitmap is
    type Compression_Method is (
       BI_RGB,
       BI_RLE8,
@@ -15,12 +16,16 @@ package Libadaimg.Bitmap is pragma Preelaborate;
       B,G,R,A : Byte; 
    end record with Pack;
 
-   type Pixels is array (Natural range <>, Natural range <>) of BGRA_Pixel with Pack;
+   type Pixels is new Packed_Byte_Array;
    type Pixels_Access is access all Pixels;
    procedure Free_Pixels is new Ada.Unchecked_Deallocation (
       Object => Pixels,
       Name   => Pixels_Access
    );
+
+   type Color_Table is array (Natural range <>) of aliased BGRA_Pixel with Pack;
+   type Color_Table_Access is access constant Color_Table;
+
    --- bitmasks for 16 bit (565); 12 bytes to write
    R16_Mask : constant UInt_32 := 16#F800#;
    G16_Mask : constant UInt_32 := 16#07E0#;
@@ -32,7 +37,7 @@ package Libadaimg.Bitmap is pragma Preelaborate;
    B32_Mask : constant UInt_32 := 16#0000_00FF#;
 
    type Bitmap_Signature is new Packed_Byte_Array(0..1);
-   subtype Color_Depth is Types.UInt_16
+   subtype Color_Depth is UInt_16
      with Static_Predicate => Color_Depth in 1 | 4 | 8 | 16 | 24 | 32;
      
    type Bitmap_Header is record
@@ -57,9 +62,11 @@ package Libadaimg.Bitmap is pragma Preelaborate;
    end record with Pack;
 
    type Image is record 
-      Header      : Bitmap_Header;
+      File_Header : Bitmap_Header;
       Info_Header : Dib_Header;
+      Row_Stride  : UInt_32;
       Pixels      : Pixels_Access;
+      Palette     : Color_Table_Access;
    end record;
    
    type Image_Access is access all Image;
@@ -71,14 +78,26 @@ package Libadaimg.Bitmap is pragma Preelaborate;
       Depth  : Color_Depth;
       Bitfields : Boolean := False
    ) return Image;
+   procedure Set_Pixel (
+      Img   : in out Image;
+      X,Y   : Natural; 
+      Color : BGRA_Pixel
+   );
+   procedure Save_Image  (Img : Image; Out_Path : String);
+   procedure Write_Image (Stream : in out Ada.Streams.Stream_IO.Stream_Access; Img : in Image);
+   
+   
 
    type RGBA_Pixel is record
       R,G,B,A : Byte;
    end record with Pack;
    function As_Rgba (Pixel : BGRA_Pixel) return RGBA_Pixel;
-
+   
    private
-      procedure Dealloc is new Ada.Unchecked_Deallocation (
+      function Color_Distance (A, B : BGRA_Pixel) return Long_Integer;
+      function Find_Nearest_Index (Img : Image; Color : BGRA_Pixel) return Byte;
+      procedure Set_Pixel_Index (Img : in out Image; X,Y : Natural; Index : Byte);
+      procedure Dealloc_Image is new Ada.Unchecked_Deallocation (
          Object => Image,
          Name   => Image_Access
       );
