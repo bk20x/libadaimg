@@ -58,7 +58,7 @@ package Libadaimg.Bitmap is
       Image_Size  : UInt_32; 
       H_Res, V_Res: Int_32;
       Colors_Used : UInt_32;
-      Colors_Important : UInt_32;
+      Colors_Important : UInt_32 := 0;
    end record with Pack;
 
    type Image is record 

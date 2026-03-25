@@ -22,7 +22,6 @@ package body Libadaimg.Bitmap is
             H_Res       => 0,
             V_Res       => 0,
             Colors_Used => (if Depth in 1 | 4 | 8 then 2 ** Natural(Depth) else 0),
-            Colors_Important => 0,
             others      => <>
          );
          Result.File_Header := (
