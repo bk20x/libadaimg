@@ -19,9 +19,10 @@ package body Libadaimg.Bitmap is
             Img_Width   => Width, Img_Height => Height, Depth => Depth,
             Compression => (if Using_Bitfields then BI_BITFIELDS else BI_RGB),
             Image_Size  => Image_Size, Planes => 1,
-            Colors_Used => (if Depth in 1 | 4 | 8 then 2 ** Natural(Depth) else 0),
             H_Res       => 0,
             V_Res       => 0,
+            Colors_Used => (if Depth in 1 | 4 | 8 then 2 ** Natural(Depth) else 0),
+            Colors_Important => 0,
             others      => <>
          );
          Result.File_Header := (
@@ -45,16 +46,15 @@ package body Libadaimg.Bitmap is
          (UInt_32(Img.Info_Header.Depth) * UInt_32(Img.Info_Header.Img_Width) + 7) / 8;
       Padding_Count : constant UInt_32 := Row_Size - Data_Width;
       Zero_Padding  : constant Stream_Element_Array (1 .. Stream_Element_Offset(Padding_Count)) := (others => 0);
-
    begin
       Bitmap_Header'Write (Stream, Img.File_Header);
       Dib_Header'Write (Stream, Img.Info_Header);
       if Img.Info_Header.Depth in Depths_With_Palette then
          if Img.Palette /= null then
             declare
-               Num_Entries : constant Natural := 2 ** Natural(Img.Info_Header.Depth);
+               Entries : constant Natural := 2 ** Natural(Img.Info_Header.Depth);
                Sub_Palette : constant Color_Table := 
-                  Img.Palette(Img.Palette'First .. Img.Palette'First + Num_Entries - 1);
+                  Img.Palette(Img.Palette'First .. Img.Palette'First + Entries - 1);
             begin
                Color_Table'Write (Stream, Sub_Palette);
             end;
@@ -105,7 +105,7 @@ package body Libadaimg.Bitmap is
             end;
          when 1 | 4 | 8 =>
             declare
-               Idx : constant Byte := Find_Nearest_Index(Img, Color);
+               Idx : constant Byte := Find_Nearest_Match(Img, Color);
             begin
                Set_Pixel_Index (Img, X, Y, Idx);
             end;
@@ -152,7 +152,7 @@ package body Libadaimg.Bitmap is
    procedure Save_Image (Img : Image; Out_Path : String) is 
       use Ada.Streams.Stream_IO;
       File  : File_Type;
-      Strm  : Stream_Access;
+      Strm  : Stream_Access := null;
    begin 
       Create (File, Mode => Out_File, Name => Out_Path);
       Strm := Stream (File);
@@ -168,16 +168,16 @@ package body Libadaimg.Bitmap is
       return (dR * dR) + (dG * dG) + (dB * dB);
    end Color_Distance;
 
-   function Find_Nearest_Index (Img : Image; Color : BGRA_Pixel) return Byte is
+   function Find_Nearest_Match (Img : Image; Color : BGRA_Pixel) return Byte is
       Best_Dist  : Long_Integer := Long_Integer'Last;
       Best_Index : Byte := 0;
-      Dist  : Long_Integer;
-      Num_Entries : constant Natural := 2 ** Natural(Img.Info_Header.Depth);
+      Dist    : Long_Integer;
+      Entries : constant Natural := 2 ** Natural(Img.Info_Header.Depth);
    begin
       if Img.Palette = null then
          return 0;
       end if;
-      for I in 0 .. Num_Entries - 1 loop
+      for I in 0 .. Entries - 1 loop
          Dist := Color_Distance (Img.Palette(Img.Palette'First + I), Color);
          if Dist < Best_Dist then
             Best_Dist  := Dist;
@@ -186,7 +186,7 @@ package body Libadaimg.Bitmap is
          end if;
       end loop;
       return Best_Index;
-   end Find_Nearest_Index;
+   end Find_Nearest_Match;
 
    procedure Free_Image (Img : in out Image_Access) is 
    begin 

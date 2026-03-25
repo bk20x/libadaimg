@@ -86,7 +86,6 @@ package Libadaimg.Bitmap is
    procedure Save_Image  (Img : Image; Out_Path : String);
    procedure Write_Image (Stream : in out Ada.Streams.Stream_IO.Stream_Access; Img : in Image);
    
-   
 
    type RGBA_Pixel is record
       R,G,B,A : Byte;
@@ -95,7 +94,7 @@ package Libadaimg.Bitmap is
    
    private
       function Color_Distance (A, B : BGRA_Pixel) return Long_Integer;
-      function Find_Nearest_Index (Img : Image; Color : BGRA_Pixel) return Byte;
+      function Find_Nearest_Match (Img : Image; Color : BGRA_Pixel) return Byte;
       procedure Set_Pixel_Index (Img : in out Image; X,Y : Natural; Index : Byte);
       procedure Dealloc_Image is new Ada.Unchecked_Deallocation (
          Object => Image,
